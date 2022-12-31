@@ -1,5 +1,6 @@
 ## TECHNICHAL ANALYSIS
 import pandas as pd
+import pandas_ta as ta
 import numpy as np
 # import talib
 from plotly.graph_objs import Figure
@@ -138,13 +139,13 @@ def rsi(df,periods=14,column=None,include=True,str='{name}({column},{period})',d
 		## === /talib ==== 
 
 		## === pure python ==== 
-		_df['Up']=df[column].diff().apply(lambda x:x if x>0 else 0)
-		_df['Down']=df[column].diff().apply(lambda x:-x if x<0 else 0)
-		_df['UpAvg']=_df['Up'].rolling(window=periods).mean()
-		_df['DownAvg']= _df['Down'].rolling(window=periods).mean()
-		_df['RSI']=100-(100/(1+_df['UpAvg']/_df['DownAvg']))
+		# _df['Up']=df[column].diff().apply(lambda x:x if x>0 else 0)
+		# _df['Down']=df[column].diff().apply(lambda x:-x if x<0 else 0)
+		# _df['UpAvg']=_df['Up'].rolling(window=periods).mean()
+		# _df['DownAvg']= _df['Down'].rolling(window=periods).mean()
+		# _df['RSI']=100-(100/(1+_df['UpAvg']/_df['DownAvg']))
 		## === /pure python ==== 
-
+		_df['RSI']=df.ta.rsi(length=periods, close=column)
 		return rename(df,_df,study,periods,column,include,str,detail)
 	column=make_list(column)
 	periods=make_list(periods)
@@ -165,9 +166,9 @@ def sma(df,periods=21,column=None,include=True,str='{name}({column},{period})',d
 		## === /talib ==== 
 
 		## === pure python ==== 
-		_df['SMA']=df[column].rolling(periods).mean()
+		# _df['SMA']=df[column].rolling(periods).mean()
 		## === /pure python ==== 
-
+		_df['SMA']=df.ta.sma(length=periods, close=column)
 		return rename(df,_df,study,periods,column,include,str,detail)
 	column=make_list(column)
 	periods=make_list(periods)
@@ -187,9 +188,9 @@ def ema(df,periods=21,column=None,include=True,str='{name}({column},{period})',d
 		## === /talib ==== 
 
 		## === pure python ==== 
-		_df['EMA']=df[column].ewm(span=periods,min_periods=periods,adjust=False).mean()
+		# _df['EMA']=df[column].ewm(span=periods,min_periods=periods,adjust=False).mean()
 		## === /pure python ==== 
-
+		_df['EMA']=df.ta.ema(length=periods, close=column)
 		return rename(df,_df,study,periods,column,include,str,detail)
 	column=make_list(column)
 	periods=make_list(periods)
@@ -207,38 +208,42 @@ def adx(df,periods=14,high='high',low='low',close='close',di=False,include=True,
 		study='ADX'
 		_df=pd.DataFrame()
 		## === talib ==== 
-		# _df['ADX']=pd.Series(talib.ADX(df[high].values,
-		#					   df[low].values,df[close].values,
+		# _df['ADX']=pd.Series(df.ta.ADX(df[high].values,
+		# 					   df[low].values,df[close].values,
 		#     				   periods),index=df.index)
 		## === /talib ==== 
 
 		## === pure python ==== 
-		def smooth(col):
-			sm=col.rolling(periods).sum()
-			for _ in list(range(periods+1,len(col))):
-				sm.iloc[_]=sm.iloc[_-1]-(1.0*sm.iloc[_-1]/periods)+col.iloc[_]
-			return sm
+		# def smooth(col):
+		# 	sm=col.rolling(periods).sum()
+		# 	for _ in list(range(periods+1,len(col))):
+		# 		sm.iloc[_]=sm.iloc[_-1]-(1.0*sm.iloc[_-1]/periods)+col.iloc[_]
+		# 	return sm
 
-		def smooth2(col):
-			sm=col.rolling(periods).mean()
-			for _ in list(range(periods*2,len(col))):
-				sm.iloc[_]=((sm.iloc[_-1]*(periods-1))+col[_])/periods
-			return sm
+		# def smooth2(col):
+		# 	sm=col.rolling(periods).mean()
+		# 	for _ in list(range(periods*2,len(col))):
+		# 		sm.iloc[_]=((sm.iloc[_-1]*(periods-1))+col[_])/periods
+		# 	return sm
 
-		_df['TR']=pd.DataFrame(dict(enumerate([df[high]-df[low],abs(df[high]-df[close].shift(1)),
-                             abs(df[low]-df[close].shift(1))]))).apply(max,axis=1)
-		__df=pd.DataFrame(dict(enumerate([df[high]-df[high].shift(1),df[low].shift(1)-df[low]])))
-		_df['DM+']=__df.apply(lambda x:max(x[0],0) if x[0]>x[1] else 0,axis=1)
-		_df['DM-']=__df.apply(lambda x:max(x[1],0) if x[1]>x[0] else 0,axis=1)
-		_df.iloc[0]=np.nan
-		_df_smooth=_df.apply(smooth)
+		# _df['TR']=pd.DataFrame(dict(enumerate([df[high]-df[low],abs(df[high]-df[close].shift(1)),
+        #                      abs(df[low]-df[close].shift(1))]))).apply(max,axis=1)
+		# __df=pd.DataFrame(dict(enumerate([df[high]-df[high].shift(1),df[low].shift(1)-df[low]])))
+		# _df['DM+']=__df.apply(lambda x:max(x[0],0) if x[0]>x[1] else 0,axis=1)
+		# _df['DM-']=__df.apply(lambda x:max(x[1],0) if x[1]>x[0] else 0,axis=1)
+		# _df.iloc[0]=np.nan
+		# _df_smooth=_df.apply(smooth)
 		
-		_df['DI+']=100.0*_df_smooth['DM+']/_df_smooth['TR']
-		_df['DI-']=100.0*_df_smooth['DM-']/_df_smooth['TR']
-		dx=pd.DataFrame(100*abs(_df['DI+']-_df['DI-'])/(_df['DI+']+_df['DI-']))
+		# _df['DI+']=100.0*_df_smooth['DM+']/_df_smooth['TR']
+		# _df['DI-']=100.0*_df_smooth['DM-']/_df_smooth['TR']
+		# dx=pd.DataFrame(100*abs(_df['DI+']-_df['DI-'])/(_df['DI+']+_df['DI-']))
 		
-		_df['ADX']=dx.apply(smooth2)[0]
+		# _df['ADX']=dx.apply(smooth2)[0]
 		## === /pure python ==== 
+
+		_df['ADX']=df.ta.adx(high= df[high].values,
+							   low= df[low].values,close= df[close].values,
+		    				   length= periods)
 		return rename(df,_df,study,periods,'',include,str,detail,output=output)
 	detail=kwargs.get('detail',False)
 	periods=make_list(periods)
@@ -254,19 +259,23 @@ def atr(df,periods=14,high='high',low='low',close='close',include=True,str='{nam
 		study='ATR'
 		_df=pd.DataFrame()
 		## === talib ==== 
-		# _df['ATR']=pd.Series(talib.ATR(df[high].values,
+		# _df['ATR']=pd.Series(df.ta.ATR(df[high].values,
 		# 							   df[low].values,
 		# 							   df[close].values,
 		# 							   periods),index=df.index)
 		## === /talib ==== 
 
 		## === pure python ==== 
-		_df['HmL']=df[high]-df[low]
-		_df['HmC']=abs(df[high]-df[close].shift(1))
-		_df['LmC']=abs(df[low]-df[close].shift(1))
-		_df['TR']=_df.apply(max,axis=1)
-		_df['ATR']=_df['TR'].rolling(periods).mean()
+		# _df['HmL']=df[high]-df[low]
+		# _df['HmC']=abs(df[high]-df[close].shift(1))
+		# _df['LmC']=abs(df[low]-df[close].shift(1))
+		# _df['TR']=_df.apply(max,axis=1)
+		# _df['ATR']=_df['TR'].rolling(periods).mean()
 		## === /pure python ==== 
+		df['ATR']=df.ta.atr(high= df[high].values,
+									   low= df[low].values,
+									   close= df[close].values,
+									   length= periods)
 		return rename(df,_df,study,periods,'',include,str,detail)
 	periods=make_list(periods)
 	__df=pd.concat([_atr(df,periods=y,high=high,low=low,close=close,include=False,str=str) for y in periods],axis=1)
@@ -391,13 +400,17 @@ def cci(df,periods=14,high='high',low='low',close='close',include=True,str='{nam
 		## === /talib ==== 
 
 		## === pure python ==== 
-		_df['tp']=df[[low,high,close]].mean(axis=1)
-		_df['avgTp']=_df['tp'].rolling(window=periods).mean()
-		mad = lambda x: np.fabs(x - x.mean()).mean()
-		_df['mad']=_df['tp'].rolling(window=periods).apply(mad)
-		_df['CCI']=(_df['tp']-_df['avgTp'])/(0.015*_df['mad'])
+		# _df['tp']=df[[low,high,close]].mean(axis=1)
+		# _df['avgTp']=_df['tp'].rolling(window=periods).mean()
+		# mad = lambda x: np.fabs(x - x.mean()).mean()
+		# _df['mad']=_df['tp'].rolling(window=periods).apply(mad)
+		# _df['CCI']=(_df['tp']-_df['avgTp'])/(0.015*_df['mad'])
 		## === /pure python ==== 
 
+		_df['CCI']=df.ta.cci(high= df[high].values,
+									  low= df[low].values,
+									  close= df[close].values,
+									  length= periods)
 		return rename(df,_df,study,periods,'',include,str,detail)
 	periods=make_list(periods)
 	__df=pd.concat([_cci(df,periods=y,high=high,low=low,close=close,include=False,str=str) for y in periods],axis=1)
@@ -446,10 +459,25 @@ def boll(df,periods=20,boll_std=2,column=None,include=True,str='{name}({column},
 		## === /talib ==== 
 
 		## === pure python ==== 
-		_df['SMA']=df[column].rolling(window=periods).mean()
-		_df['UPPER']=_df['SMA']+df[column].rolling(window=periods).std()*boll_std
-		_df['LOWER']=_df['SMA']-df[column].rolling(window=periods).std()*boll_std
+		# _df['SMA']=df[column].rolling(window=periods).mean()
+		# _df['UPPER']=_df['SMA']+df[column].rolling(window=periods).std()*boll_std
+		# _df['LOWER']=_df['SMA']-df[column].rolling(window=periods).std()*boll_std
 		## === /pure python ==== 
+
+		# Name and Categorize it
+		length = periods
+		std = boll_std
+		lower_name = f"BBL_{length}_{std}"
+		mid_name = f"BBM_{length}_{std}"
+		upper_name = f"BBU_{length}_{std}"
+
+		bb_df=df.ta.bbands(df[column].values,periods,boll_std,boll_std)
+		bb_df.rename(columns={
+			lower_name: 'LOWER',
+			upper_name: 'UPPER',
+			mid_name: 'SMA'
+		}, inplace=True)
+		_df=pd.DataFrame(bb_df,index=df.index)
 
 		return rename(df,_df,study,periods,column,False,str,detail,output=output)
 	column=make_list(column)
