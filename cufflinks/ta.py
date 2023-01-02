@@ -467,11 +467,10 @@ def boll(df,periods=20,boll_std=2,column=None,include=True,str='{name}({column},
 		# Name and Categorize it
 		length = periods
 		std = boll_std
-		lower_name = f"BBL_{length}_{std}"
-		mid_name = f"BBM_{length}_{std}"
-		upper_name = f"BBU_{length}_{std}"
-
-		bb_df=df.ta.bbands(df[column].values,periods,boll_std,boll_std)
+		lower_name = f"BBL_{length}_{float(std)}"
+		mid_name = f"BBM_{length}_{float(std)}"
+		upper_name = f"BBU_{length}_{float(std)}"
+		bb_df=df.ta.bbands(close=column,length=periods,std=boll_std)
 		bb_df.rename(columns={
 			lower_name: 'LOWER',
 			upper_name: 'UPPER',
